@@ -82,6 +82,7 @@ export default class GooglePlacesAutocomplete extends Component {
   constructor (props) {
     super(props);
     this.state = this.getInitialState.call(this);
+    this.onSubmitEditing = this.onSubmitEditing.bind(this);
   }
 
   getInitialState = () => ({
@@ -114,6 +115,14 @@ export default class GooglePlacesAutocomplete extends Component {
     }));
 
     return [...res, ...results];
+  }
+
+  onSubmitEditing = () => {
+    if (this.state.dataSource.length > 0) {
+      this._onSelect(this.state.dataSource[0], "onSubmitEditing");
+    } else {
+      this.props.onSubmitEditing();
+    }
   }
 
   componentWillMount() {
@@ -215,7 +224,7 @@ export default class GooglePlacesAutocomplete extends Component {
     );
   }
 
-  _onPress = (rowData) => {
+  _onSelect = (rowData, event = "") => {
     if (rowData.isPredefinedPlace !== true && this.props.fetchDetails === true) {
       if (rowData.isLoading === true) {
         // already requesting
@@ -251,7 +260,14 @@ export default class GooglePlacesAutocomplete extends Component {
               });
 
               delete rowData.isLoading;
-              this.props.onPress(rowData, details);
+              switch(event) {
+                case "onPress":
+                  this.props.onPress(rowData, details);
+                  break;
+                case "onSubmitEditing":
+                  this.props.onSubmitEditing(rowData, details);
+                  break;
+              }
             }
           } else {
             this._disableRowLoaders();
@@ -591,7 +607,7 @@ export default class GooglePlacesAutocomplete extends Component {
         showsVerticalScrollIndicator={false}>
         <TouchableHighlight
           style={{ width: WINDOW.width }}
-          onPress={() => this._onPress(rowData)}
+          onPress={() => this._onSelect(rowData, "onPress")}
           underlayColor={this.props.listUnderlayColor || "#c8c7cc"}
         >
           <View style={[this.props.suppressDefaultStyles ? {} : defaultStyles.row, this.props.styles.row, rowData.isPredefinedPlace ? this.props.styles.specialItemRow : {}]}>
@@ -720,7 +736,7 @@ export default class GooglePlacesAutocomplete extends Component {
               style={[this.props.suppressDefaultStyles ? {} : defaultStyles.textInput, this.props.styles.textInput]}
               value={this.state.text}
               placeholder={this.props.placeholder}
-              onSubmitEditing={this.props.onSubmitEditing}
+              onSubmitEditing={this.onSubmitEditing}
               placeholderTextColor={this.props.placeholderTextColor}
               onFocus={onFocus ? () => {this._onFocus(); onFocus()} : this._onFocus}
               onBlur={this._onBlur}
